@@ -8,15 +8,26 @@ use entities::{prelude::*, *};
 
 use rocket::{serde::json::Json, *};
 use database::set_up_db;
-use sea_orm::{DatabaseConnection, EntityTrait};
+use sea_orm::{DatabaseConnection, EntityTrait, ModelTrait};
+use ::serde::Deserialize;
 
-#[get("/")]
-async fn index() -> &'static str {
-    "Hello, bakeries!"
+#[derive(Deserialize)]
+#[serde(crate = "rocket::serde")]
+struct SignupRequest<'r> {
+    email: &'r str,
+    password: &'r str,
+}
+
+#[derive(Deserialize)]
+#[serde(crate = "rocket::serde")]
+struct CreateDeviceRequest<'r> {
+   name: &'r str,
+   identity_public_key: &'r str,
+   user_id: i32,
 }
 
 #[get("/users")]
-async fn users(db: &State<DatabaseConnection>) -> Json<Vec<String>> {
+async fn users(db: &State<DatabaseConnection>) -> Json<Vec<user::Model>> {
     let db = db as &DatabaseConnection;
 
     let user_objs = User::find()
@@ -24,24 +35,56 @@ async fn users(db: &State<DatabaseConnection>) -> Json<Vec<String>> {
         .await
         .unwrap()
         .into_iter()
-        .map(|b| b.email)
-        .collect::<Vec<String>>();
+        .collect::<Vec<user::Model>>();
     Json(user_objs)
 }
 
-#[get("/create-user?<email>")]
-async fn create_user(db: &State<DatabaseConnection>, email: &str) -> Result<(), ErrorResponder> {
+#[post("/signup", data = "<request>")]
+async fn signup(db: &State<DatabaseConnection>, request: Json<SignupRequest<'_>>) -> Result<(), ErrorResponder> {
     let db = db as &DatabaseConnection;
 
     let new_user = user::ActiveModel {
-        email: sea_orm::ActiveValue::Set(email.to_owned()),
+        email: sea_orm::ActiveValue::Set(request.email.to_owned()),
         created_at: sea_orm::ActiveValue::Set(Utc::now().naive_utc()),
         updated_at: sea_orm::ActiveValue::Set(Utc::now().naive_utc()),
-        password_salt: sea_orm::ActiveValue::Set("temp_pass_salt".as_bytes().to_vec()),
+        password_salt: sea_orm::ActiveValue::Set(request.password.as_bytes().to_vec()),
         ..Default::default()
     };
 
     User::insert(new_user)
+        .exec(db)
+        .await?;
+    Ok(())
+}
+
+#[get("/devices/<user_id>")]
+async fn get_devices(db: &State<DatabaseConnection>, user_id: u8) -> Json<Vec<device::Model>> {
+    let db = db as &DatabaseConnection;
+
+    let user: Option<user::Model> = User::find_by_id(user_id).one(db).await.unwrap();
+    let user: user::Model = user.unwrap();
+
+    let devices: Vec<device::Model> = user.find_related(Device).all(db)
+    .await
+    .unwrap();
+
+    Json(devices)
+}
+
+#[post("/create-device", data = "<request>")]
+async fn create_device(db: &State<DatabaseConnection>, request: Json<CreateDeviceRequest<'_>>) -> Result<(), ErrorResponder> {
+    let db = db as &DatabaseConnection;
+    
+    let updated_device = device::ActiveModel {
+        user_id: sea_orm::ActiveValue::Set(request.user_id),
+        name: sea_orm::ActiveValue::Set(request.name.to_owned()),
+        identity_public_key: sea_orm::ActiveValue::Set(request.identity_public_key.as_bytes().to_vec()),
+        last_seen: sea_orm::ActiveValue::Set(Utc::now().naive_utc()),
+        created_at: sea_orm::ActiveValue::Set(Utc::now().naive_utc()),
+        ..Default::default()
+    };
+
+    Device::insert(updated_device)
         .exec(db)
         .await?;
     Ok(())
@@ -56,7 +99,7 @@ async fn rocket() -> _ {
 
     rocket::build()
         .manage(db)
-        .mount("/", routes![index, users, create_user])
+        .mount("/", routes![users, signup, get_devices, create_device])
 }
 
 #[derive(Responder)]
