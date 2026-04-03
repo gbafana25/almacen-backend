@@ -12,3 +12,4 @@
 ## TODO
 - move request objects/endpoints into separate files (`api/` folder)
 - figure out more automated way of updating migrations in docker compose
+- find another way to serialize object data when returned in requests (Serialize/Deserialize flags in entity files get overwritten)

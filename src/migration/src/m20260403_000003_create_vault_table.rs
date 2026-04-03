@@ -1,0 +1,48 @@
+use sea_orm_migration::{prelude::*, schema::*};
+use crate::m20260401_000002_create_device_table::Device;
+pub struct Migration;
+
+impl MigrationName for Migration {
+    fn name(&self) -> &str {
+        "m_20260403_000002_create_vault_table"
+    }
+}
+
+#[async_trait::async_trait]
+impl MigrationTrait for Migration {
+    async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        manager
+            .create_table(
+                Table::create()
+                    .table(Vault::Table)
+                    .if_not_exists()
+                    .col(ColumnDef::new(Vault::Id).uuid().not_null().primary_key().default(Expr::cust("gen_random_uuid()")))
+                    .col(ColumnDef::new(Vault::Name).string().not_null())
+                    .col(ColumnDef::new(Vault::CreatedByDeviceId).uuid().not_null())
+                        .foreign_key(
+                            ForeignKey::create()
+                                .name("fk-created-by-device_id")
+                                .from(Vault::Table, Vault::CreatedByDeviceId)
+                                .to(Device::Table, Device::Id)
+                        )
+                    .col(ColumnDef::new(Vault::CreatedAt).timestamp().not_null())
+                    .to_owned()
+            )
+            .await
+    }
+
+    async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        manager
+            .drop_table(Table::drop().table(Vault::Table).to_owned())
+            .await
+    }
+}
+
+#[derive(DeriveIden)]
+enum Vault {
+    Table,
+    Id,
+    Name,
+    CreatedByDeviceId,
+    CreatedAt,
+}

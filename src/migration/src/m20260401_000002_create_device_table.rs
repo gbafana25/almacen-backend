@@ -17,8 +17,8 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Device::Table)
                     .if_not_exists()
-                    .col(ColumnDef::new(Device::Id).integer().not_null().auto_increment().primary_key())
-                    .col(ColumnDef::new(Device::UserId).integer().not_null())
+                    .col(ColumnDef::new(Device::Id).uuid().not_null().primary_key().default(Expr::cust("gen_random_uuid()")))
+                    .col(ColumnDef::new(Device::UserId).uuid().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-device-user_id")
@@ -44,7 +44,7 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-enum Device {
+pub enum Device {
     Table,
     Id,
     UserId,

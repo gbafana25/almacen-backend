@@ -4,3 +4,4 @@ pub mod prelude;
 
 pub mod device;
 pub mod user;
+pub mod vault;

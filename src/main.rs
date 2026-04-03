@@ -8,8 +8,8 @@ use entities::{prelude::*, *};
 
 use rocket::{serde::json::Json, *};
 use database::set_up_db;
-use sea_orm::{DatabaseConnection, EntityTrait, ModelTrait};
-use ::serde::Deserialize;
+use sea_orm::{DatabaseConnection, EntityTrait, ModelTrait, prelude::Uuid};
+use ::serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -23,11 +23,17 @@ struct SignupRequest<'r> {
 struct CreateDeviceRequest<'r> {
    name: &'r str,
    identity_public_key: &'r str,
-   user_id: i32,
+   user_id: Uuid,
+}
+
+#[derive(Serialize)]
+struct UserResponse {
+    id: Uuid,
+    email: String,
 }
 
 #[get("/users")]
-async fn users(db: &State<DatabaseConnection>) -> Json<Vec<user::Model>> {
+async fn users(db: &State<DatabaseConnection>) -> Json<Vec<UserResponse>> {
     let db = db as &DatabaseConnection;
 
     let user_objs = User::find()
@@ -35,7 +41,8 @@ async fn users(db: &State<DatabaseConnection>) -> Json<Vec<user::Model>> {
         .await
         .unwrap()
         .into_iter()
-        .collect::<Vec<user::Model>>();
+        .map(|b| UserResponse { email: b.email.clone(), id: b.id })
+        .collect::<Vec<UserResponse>>();
     Json(user_objs)
 }
 
@@ -58,15 +65,19 @@ async fn signup(db: &State<DatabaseConnection>, request: Json<SignupRequest<'_>>
 }
 
 #[get("/devices/<user_id>")]
-async fn get_devices(db: &State<DatabaseConnection>, user_id: u8) -> Json<Vec<device::Model>> {
+async fn get_devices(db: &State<DatabaseConnection>, user_id: Uuid) -> Json<Vec<String>> {
     let db = db as &DatabaseConnection;
 
     let user: Option<user::Model> = User::find_by_id(user_id).one(db).await.unwrap();
     let user: user::Model = user.unwrap();
 
-    let devices: Vec<device::Model> = user.find_related(Device).all(db)
+    let devices = user.find_related(Device)
+    .all(db)
     .await
-    .unwrap();
+    .unwrap()
+    .into_iter()
+    .map(|d| d.name)
+    .collect::<Vec<String>>();
 
     Json(devices)
 }

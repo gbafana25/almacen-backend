@@ -2,3 +2,4 @@
 
 pub use super::device::Entity as Device;
 pub use super::user::Entity as User;
+pub use super::vault::Entity as Vault;
