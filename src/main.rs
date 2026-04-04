@@ -2,21 +2,20 @@
 use sea_orm_migration::prelude::*;
 mod database;
 mod entities;
+mod api;
 use chrono::{self, Utc};
+use crate::api::ErrorResponder;
 
 use entities::{prelude::*, *};
 
 use rocket::{serde::json::Json, *};
 use database::set_up_db;
 use sea_orm::{DatabaseConnection, EntityTrait, ModelTrait, prelude::Uuid};
-use ::serde::{Deserialize, Serialize};
+use ::serde::{Deserialize};
 
-#[derive(Deserialize)]
-#[serde(crate = "rocket::serde")]
-struct SignupRequest<'r> {
-    email: &'r str,
-    password: &'r str,
-}
+use crate::api::user::{signup, users};
+
+
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -24,44 +23,6 @@ struct CreateDeviceRequest<'r> {
    name: &'r str,
    identity_public_key: &'r str,
    user_id: Uuid,
-}
-
-#[derive(Serialize)]
-struct UserResponse {
-    id: Uuid,
-    email: String,
-}
-
-#[get("/users")]
-async fn users(db: &State<DatabaseConnection>) -> Json<Vec<UserResponse>> {
-    let db = db as &DatabaseConnection;
-
-    let user_objs = User::find()
-        .all(db)
-        .await
-        .unwrap()
-        .into_iter()
-        .map(|b| UserResponse { email: b.email.clone(), id: b.id })
-        .collect::<Vec<UserResponse>>();
-    Json(user_objs)
-}
-
-#[post("/signup", data = "<request>")]
-async fn signup(db: &State<DatabaseConnection>, request: Json<SignupRequest<'_>>) -> Result<(), ErrorResponder> {
-    let db = db as &DatabaseConnection;
-
-    let new_user = user::ActiveModel {
-        email: sea_orm::ActiveValue::Set(request.email.to_owned()),
-        created_at: sea_orm::ActiveValue::Set(Utc::now().naive_utc()),
-        updated_at: sea_orm::ActiveValue::Set(Utc::now().naive_utc()),
-        password_salt: sea_orm::ActiveValue::Set(request.password.as_bytes().to_vec()),
-        ..Default::default()
-    };
-
-    User::insert(new_user)
-        .exec(db)
-        .await?;
-    Ok(())
 }
 
 #[get("/devices/<user_id>")]
@@ -113,16 +74,3 @@ async fn rocket() -> _ {
         .mount("/", routes![users, signup, get_devices, create_device])
 }
 
-#[derive(Responder)]
-#[response(status = 500, content_type = "json")]
-struct ErrorResponder {
-    message: String,
-}
-
-impl From<DbErr> for ErrorResponder {
-    fn from(err: DbErr) -> ErrorResponder {
-        ErrorResponder {
-            message: err.to_string(),
-        }
-    }
-}
