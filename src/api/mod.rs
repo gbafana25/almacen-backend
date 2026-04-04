@@ -1,4 +1,6 @@
 pub mod user;
+pub mod device;
+pub mod vault;
 
 use rocket::{*};
 use sea_orm::DbErr;

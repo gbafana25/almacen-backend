@@ -10,6 +10,6 @@
 - run `DATABASE_URL=postgres://postgres:postgres@localhost:5432/app_db sea-orm-cli migrate up -d ./src/migration/`
 
 ## TODO
-- move request objects/endpoints into separate files (`api/` folder)
+- salt user passwords on account creation
+- expand client app (existing endpoints, create device keys, send public key)
 - figure out more automated way of updating migrations in docker compose
-- find another way to serialize object data when returned in requests (Serialize/Deserialize flags in entity files get overwritten)

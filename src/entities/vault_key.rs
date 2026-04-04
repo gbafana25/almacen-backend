@@ -3,49 +3,48 @@
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
-#[sea_orm(table_name = "device")]
+#[sea_orm(table_name = "vault_key")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
-    pub user_id: Uuid,
-    pub name: String,
+    pub vault_id: Uuid,
+    pub device_id: Uuid,
     #[sea_orm(column_type = "VarBinary(StringLen::None)")]
-    pub identity_public_key: Vec<u8>,
-    pub last_seen: DateTime,
+    pub encrypted_vault_key: Vec<u8>,
+    #[sea_orm(column_type = "VarBinary(StringLen::None)")]
+    pub nonce: Vec<u8>,
     pub created_at: DateTime,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::user::Entity",
-        from = "Column::UserId",
-        to = "super::user::Column::Id",
+        belongs_to = "super::device::Entity",
+        from = "Column::DeviceId",
+        to = "super::device::Column::Id",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    User,
-    #[sea_orm(has_many = "super::vault::Entity")]
+    Device,
+    #[sea_orm(
+        belongs_to = "super::vault::Entity",
+        from = "Column::VaultId",
+        to = "super::vault::Column::Id",
+        on_update = "NoAction",
+        on_delete = "NoAction"
+    )]
     Vault,
-    #[sea_orm(has_many = "super::vault_key::Entity")]
-    VaultKey,
 }
 
-impl Related<super::user::Entity> for Entity {
+impl Related<super::device::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::User.def()
+        Relation::Device.def()
     }
 }
 
 impl Related<super::vault::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Vault.def()
-    }
-}
-
-impl Related<super::vault_key::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::VaultKey.def()
     }
 }
 
