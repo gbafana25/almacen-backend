@@ -8,7 +8,9 @@
 - run `cargo build` in `almacen-backend/`
 - run docker with `docker compose up --build`
 - run `DATABASE_URL=postgres://postgres:postgres@localhost:5432/app_db sea-orm-cli migrate up -d ./src/migration/`
+- run `sea-orm-cli generate entity -u postgres://postgres:postgres@localhost:5432/app_db -o src/entities/` to generate entities
 
 ## TODO
+- move all uuid generation to api endpoint, return in response
 - expand client app (existing endpoints, create device keys, send public key)
 - figure out more automated way of updating migrations in docker compose

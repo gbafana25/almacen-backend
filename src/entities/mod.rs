@@ -5,4 +5,5 @@ pub mod prelude;
 pub mod device;
 pub mod user;
 pub mod vault;
+pub mod vault_item;
 pub mod vault_key;

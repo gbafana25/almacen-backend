@@ -3,4 +3,5 @@
 pub use super::device::Entity as Device;
 pub use super::user::Entity as User;
 pub use super::vault::Entity as Vault;
+pub use super::vault_item::Entity as VaultItem;
 pub use super::vault_key::Entity as VaultKey;

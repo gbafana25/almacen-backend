@@ -17,7 +17,7 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Device::Table)
                     .if_not_exists()
-                    .col(ColumnDef::new(Device::Id).uuid().not_null().primary_key().default(Expr::cust("gen_random_uuid()")))
+                    .col(ColumnDef::new(Device::Id).uuid().not_null().primary_key())
                     .col(ColumnDef::new(Device::UserId).uuid().not_null())
                     .foreign_key(
                         ForeignKey::create()

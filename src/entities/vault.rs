@@ -22,6 +22,8 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     Device,
+    #[sea_orm(has_many = "super::vault_item::Entity")]
+    VaultItem,
     #[sea_orm(has_many = "super::vault_key::Entity")]
     VaultKey,
 }
@@ -29,6 +31,12 @@ pub enum Relation {
 impl Related<super::device::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Device.def()
+    }
+}
+
+impl Related<super::vault_item::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::VaultItem.def()
     }
 }
 

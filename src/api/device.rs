@@ -55,10 +55,12 @@ pub async fn get_devices(db: &State<DatabaseConnection>, user_id: Uuid) -> Json<
 }
 
 #[post("/create-device", data = "<request>")]
-pub async fn create_device(db: &State<DatabaseConnection>, request: Json<CreateDeviceRequest<'_>>) -> Result<(), ErrorResponder> {
+pub async fn create_device(db: &State<DatabaseConnection>, request: Json<CreateDeviceRequest<'_>>) -> Result<Json<DeviceResponse>, ErrorResponder> {
     let db = db as &DatabaseConnection;
+    let id = Uuid::new_v4();
     
     let updated_device = device::ActiveModel {
+        id: sea_orm::ActiveValue::Set(id.to_owned()),
         user_id: sea_orm::ActiveValue::Set(request.user_id),
         name: sea_orm::ActiveValue::Set(request.name.to_owned()),
         identity_public_key: sea_orm::ActiveValue::Set(request.identity_public_key.as_bytes().to_vec()),
@@ -70,5 +72,5 @@ pub async fn create_device(db: &State<DatabaseConnection>, request: Json<CreateD
     Device::insert(updated_device)
         .exec(db)
         .await?;
-    Ok(())
+    Ok(Json(DeviceResponse { id, user_id: request.user_id, name: request.name.to_string(), identity_public_key: request.identity_public_key.to_string() }))
 }

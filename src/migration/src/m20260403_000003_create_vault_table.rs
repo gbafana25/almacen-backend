@@ -16,7 +16,7 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Vault::Table)
                     .if_not_exists()
-                    .col(ColumnDef::new(Vault::Id).uuid().not_null().primary_key().default(Expr::cust("gen_random_uuid()")))
+                    .col(ColumnDef::new(Vault::Id).uuid().not_null().primary_key())
                     .col(ColumnDef::new(Vault::Name).string().not_null())
                     .col(ColumnDef::new(Vault::CreatedByDeviceId).uuid().not_null())
                         .foreign_key(

@@ -1,3 +1,4 @@
+use chrono::Utc;
 use sea_orm::{DatabaseConnection, ModelTrait, EntityTrait, prelude::Uuid};
 use ::serde::{Serialize, Deserialize};
 use rocket::{serde::json::Json, *};
@@ -50,18 +51,22 @@ pub async fn get_vaults_by_device(db: &State<DatabaseConnection>, device_id: Uui
 }
 
 #[post("/vaults", data = "<request>")]
-pub async fn create_vault(db: &State<DatabaseConnection>, request: Json<CreateVaultRequest<'_>>) -> Result<(), ErrorResponder> {
+pub async fn create_vault(db: &State<DatabaseConnection>, request: Json<CreateVaultRequest<'_>>) -> Result<Json<VaultResponse>, ErrorResponder> {
     let db = db as &DatabaseConnection;
+    let id = Uuid::new_v4();
 
     let new_vault = entities::vault::ActiveModel {
+        id: sea_orm::ActiveValue::Set(id.to_owned()),
         name: sea_orm::ActiveValue::Set(request.name.to_owned()),
         created_by_device_id: sea_orm::ActiveValue::Set(request.device_id),
-        ..Default::default()
+        created_at: sea_orm::ActiveValue::Set(Utc::now().naive_utc()),
     };
 
     Vault::insert(new_vault)
         .exec(db)
         .await?;
 
-    Ok(())
+    // TODO: create vault key for requesting device
+
+    Ok(Json(VaultResponse { id, name: request.name.to_string() }))
 }
