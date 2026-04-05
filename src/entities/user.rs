@@ -8,8 +8,8 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
     pub email: String,
-    #[sea_orm(column_type = "VarBinary(StringLen::None)")]
-    pub password_salt: Vec<u8>,
+    pub password_salt: String,
+    pub hashed_password: String,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }
