@@ -9,10 +9,8 @@ pub struct Model {
     pub id: Uuid,
     pub vault_id: Uuid,
     pub device_id: Uuid,
-    #[sea_orm(column_type = "VarBinary(StringLen::None)")]
-    pub encrypted_vault_key: Vec<u8>,
-    #[sea_orm(column_type = "VarBinary(StringLen::None)")]
-    pub nonce: Vec<u8>,
+    pub encrypted_vault_key: String,
+    pub nonce: String,
     pub created_at: DateTime,
 }
 
