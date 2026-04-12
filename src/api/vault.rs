@@ -13,7 +13,8 @@ use crate::Vault;
 #[serde(crate = "rocket::serde")]
 pub struct VaultResponse {
     id: Uuid,
-    name: String
+    name: String,
+    created_by_device_id: Uuid,
 }
 
 impl From<entities::vault::Model> for VaultResponse {
@@ -21,6 +22,7 @@ impl From<entities::vault::Model> for VaultResponse {
         Self {
             id: model.id,
             name: model.name,
+            created_by_device_id: model.created_by_device_id,
         }
     }
 }
@@ -84,5 +86,5 @@ pub async fn create_vault(db: &State<DatabaseConnection>, request: Json<CreateVa
         .exec(db)
         .await?;
 
-    Ok(Json(VaultResponse { id, name: request.name.to_string() }))
+    Ok(Json(VaultResponse { id, name: request.name.to_string(), created_by_device_id: request.device_id }))
 }

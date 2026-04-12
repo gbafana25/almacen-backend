@@ -7,7 +7,10 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
+    pub name: String,
     pub vault_id: Uuid,
+    pub ciphertext: String,
+    pub nonce: String,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }

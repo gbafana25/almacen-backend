@@ -17,6 +17,7 @@ impl MigrationTrait for Migration {
                     .table(VaultItem::Table)
                     .if_not_exists()
                     .col(ColumnDef::new(VaultItem::Id).uuid().not_null().primary_key())
+                    .col(ColumnDef::new(VaultItem::Name).string().not_null())
                     .col(ColumnDef::new(VaultItem::VaultId).uuid().not_null())
                         .foreign_key(
                             ForeignKey::create()
@@ -24,6 +25,8 @@ impl MigrationTrait for Migration {
                                 .from(VaultItem::Table, VaultItem::VaultId)
                                 .to(Vault::Table, Vault::Id)
                         )
+                    .col(ColumnDef::new(VaultItem::Ciphertext).string().not_null())
+                    .col(ColumnDef::new(VaultItem::Nonce).string().not_null())
                     .col(ColumnDef::new(VaultItem::CreatedAt).timestamp().not_null())
                     .col(ColumnDef::new(VaultItem::UpdatedAt).timestamp().not_null())
                     .to_owned()
@@ -42,6 +45,7 @@ impl MigrationTrait for Migration {
 enum VaultItem {
     Table,
     Id,
+    Name,
     VaultId,
     Ciphertext,
     Nonce,
