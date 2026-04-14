@@ -18,7 +18,6 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(ColumnDef::new(User::Id).uuid().not_null().primary_key())
                     .col(ColumnDef::new(User::Email).string().not_null())
-                    .col(ColumnDef::new(User::PasswordSalt).string().not_null())
                     .col(ColumnDef::new(User::HashedPassword).string().not_null())
                     .col(ColumnDef::new(User::CreatedAt).timestamp().not_null())
                     .col(ColumnDef::new(User::UpdatedAt).timestamp().not_null())
@@ -40,7 +39,6 @@ pub enum User {
     Table,
     Id,
     Email,
-    PasswordSalt,
     HashedPassword,
     CreatedAt,
     UpdatedAt,

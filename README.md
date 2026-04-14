@@ -12,5 +12,4 @@
 
 ## TODO
 - endpoint to add another key to vault (new device enrollment)
-- move password hashing locally to client
 - figure out more automated way of updating migrations in docker compose
