@@ -11,5 +11,6 @@
 - run `sea-orm-cli generate entity -u postgres://postgres:postgres@localhost:5432/app_db -o src/entities/` to generate entities
 
 ## TODO
+- endpoint to get one vault and one item (by object id)
 - endpoint to add another key to vault (new device enrollment)
 - figure out more automated way of updating migrations in docker compose
