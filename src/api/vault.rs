@@ -1,3 +1,4 @@
+use sea_orm::ModelTrait;
 use chrono::Utc;
 use sea_orm::{DatabaseConnection, EntityTrait, prelude::Uuid};
 use ::serde::{Serialize, Deserialize};
@@ -5,8 +6,9 @@ use rocket::{serde::json::Json, *};
 
 use crate::api::ErrorResponder;
 use crate::entities::prelude::VaultKey;
-use crate::entities::{self};
+use crate::entities::{self, device};
 use crate::Vault;
+use crate::Device;
 
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]
@@ -35,19 +37,22 @@ pub struct CreateVaultRequest<'r> {
     nonce: &'r str,
 }
 
-#[get("/vaults/<vault_id>")]
-pub async fn get_vaults(db: &State<DatabaseConnection>, vault_id: Uuid) -> Json<Vec<VaultResponse>> {
+#[get("/vaults/<device_id>")]
+pub async fn get_all_vaults(db: &State<DatabaseConnection>, device_id: Uuid) -> Json<Vec<VaultResponse>> {
     let db = db as &DatabaseConnection;
 
-    let vaults: Vec<VaultResponse> = Vault::find_by_id(vault_id)
-    .all(db)
-    .await
-    .unwrap()
-    .into_iter()
-    .map(Into::into)
-    .collect();
+    let device: Option<device::Model> = Device::find_by_id(device_id).one(db).await.unwrap();
+    let device: device::Model = device.unwrap();
 
-    return Json(vaults);
+    let vaults = device.find_related(Vault)
+        .all(db)
+        .await
+        .unwrap()
+        .into_iter()
+        .map(Into::into)
+        .collect();
+
+    Json(vaults)
 }
 
 #[post("/vaults", data = "<request>")]
