@@ -1,4 +1,4 @@
-use sea_orm_migration::{prelude::*, schema::*};
+use sea_orm_migration::{prelude::*};
 use crate::m20260331_000001_create_user_table::User;
 
 pub struct Migration;

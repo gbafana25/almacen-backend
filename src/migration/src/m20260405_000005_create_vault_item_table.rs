@@ -1,4 +1,4 @@
-use sea_orm_migration::{prelude::*, schema::*};
+use sea_orm_migration::{prelude::*};
 use crate::m20260403_000003_create_vault_table::Vault;
 pub struct Migration;
 

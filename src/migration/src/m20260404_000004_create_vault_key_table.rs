@@ -1,6 +1,6 @@
 use crate::m20260401_000002_create_device_table::Device;
 use crate::m20260403_000003_create_vault_table::Vault;
-use sea_orm_migration::{prelude::*, schema::*};
+use sea_orm_migration::{prelude::*};
 
 pub struct Migration;
 

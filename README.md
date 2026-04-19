@@ -11,8 +11,10 @@
 - run `sea-orm-cli generate entity -u postgres://postgres:postgres@localhost:5432/app_db -o src/entities/` to generate entities
 
 ## TODO
-- should add user id to vault object schema
 - endpoint to add another key to vault (new device enrollment)
+- jwt token generated on login
+    - storage
+    - create guard for api requests
 - for device keys, should research more into key exchange
-- use something like pickledb for persistence
+    - should there be server public key sent on succesful login?
 - figure out more automated way of updating migrations in docker compose

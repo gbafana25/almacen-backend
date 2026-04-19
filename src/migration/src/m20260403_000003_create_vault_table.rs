@@ -1,5 +1,6 @@
-use sea_orm_migration::{prelude::*, schema::*};
+use sea_orm_migration::{prelude::*};
 use crate::m20260401_000002_create_device_table::Device;
+use crate::m20260331_000001_create_user_table::User;
 pub struct Migration;
 
 impl MigrationName for Migration {
@@ -25,6 +26,13 @@ impl MigrationTrait for Migration {
                                 .from(Vault::Table, Vault::CreatedByDeviceId)
                                 .to(Device::Table, Device::Id)
                         )
+                    .col(ColumnDef::new(Vault::CreatedByUserId).uuid().not_null())
+                        .foreign_key(
+                            ForeignKey::create()
+                                .name("fk-created-by-user_id")
+                                .from(Vault::Table, Vault::CreatedByUserId)
+                                .to(User::Table, User::Id)
+                        )
                     .col(ColumnDef::new(Vault::CreatedAt).timestamp().not_null())
                     .to_owned()
             )
@@ -44,5 +52,6 @@ pub enum Vault {
     Id,
     Name,
     CreatedByDeviceId,
+    CreatedByUserId,
     CreatedAt,
 }

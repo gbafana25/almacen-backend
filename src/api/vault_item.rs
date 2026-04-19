@@ -14,6 +14,7 @@ use crate::VaultItem;
 #[serde(crate = "rocket::serde")]
 pub struct VaultItemResponse {
     id: Uuid,
+    name: String,
     vault_id: Uuid,
     ciphertext: String,
     nonce: String,
@@ -23,6 +24,7 @@ impl From<entities::vault_item::Model> for VaultItemResponse {
     fn from(model: entities::vault_item::Model) -> Self {
         Self {
             id: model.id,
+            name: model.name,
             vault_id: model.vault_id,
             ciphertext: model.ciphertext,
             nonce: model.nonce,
@@ -77,5 +79,5 @@ pub async fn create_vault_item(db: &State<DatabaseConnection>, request: Json<Cre
         .exec(db)
         .await?;
 
-    Ok(Json(VaultItemResponse { id, vault_id: request.vault_id, ciphertext: "".to_owned(), nonce: "".to_owned() }))
+    Ok(Json(VaultItemResponse { id, name: request.name.to_owned(), vault_id: request.vault_id, ciphertext: "".to_owned(), nonce: "".to_owned() }))
 }

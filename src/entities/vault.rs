@@ -9,6 +9,7 @@ pub struct Model {
     pub id: Uuid,
     pub name: String,
     pub created_by_device_id: Uuid,
+    pub created_by_user_id: Uuid,
     pub created_at: DateTime,
 }
 
@@ -22,6 +23,14 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     Device,
+    #[sea_orm(
+        belongs_to = "super::user::Entity",
+        from = "Column::CreatedByUserId",
+        to = "super::user::Column::Id",
+        on_update = "NoAction",
+        on_delete = "NoAction"
+    )]
+    User,
     #[sea_orm(has_many = "super::vault_item::Entity")]
     VaultItem,
     #[sea_orm(has_many = "super::vault_key::Entity")]
@@ -31,6 +40,12 @@ pub enum Relation {
 impl Related<super::device::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Device.def()
+    }
+}
+
+impl Related<super::user::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::User.def()
     }
 }
 
