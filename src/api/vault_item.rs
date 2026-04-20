@@ -5,7 +5,7 @@ use sea_orm::{DatabaseConnection, ModelTrait, EntityTrait};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::api::ErrorResponder;
+use crate::api::{JWT, NetworkResponse};
 use crate::entities::{self, vault};
 use crate::Vault;
 use crate::VaultItem;
@@ -42,7 +42,8 @@ pub struct CreateVaultItemRequest<'r> {
 }
 
 #[get("/vault-items/<vault_id>")]
-pub async fn get_vault_items_by_vault(db: &State<DatabaseConnection>, vault_id: Uuid) -> Json<Vec<VaultItemResponse>> {
+pub async fn get_vault_items_by_vault(db: &State<DatabaseConnection>, vault_id: Uuid, key: Result<JWT, NetworkResponse>) -> Result<Json<Vec<VaultItemResponse>>, NetworkResponse> {
+    let _key = key?;
     let db = db as &DatabaseConnection;
 
     let vault: Option<vault::Model> = Vault::find_by_id(vault_id).one(db).await.unwrap();
@@ -57,11 +58,12 @@ pub async fn get_vault_items_by_vault(db: &State<DatabaseConnection>, vault_id: 
         .map(Into::into)
         .collect();
 
-    return Json(vault_items);
+    Ok(Json(vault_items))
 }
 
 #[post("/vault-items", data = "<request>")]
-pub async fn create_vault_item(db: &State<DatabaseConnection>, request: Json<CreateVaultItemRequest<'_>>) -> Result<Json<VaultItemResponse>, ErrorResponder> {
+pub async fn create_vault_item(db: &State<DatabaseConnection>, request: Json<CreateVaultItemRequest<'_>>, key: Result<JWT, NetworkResponse>) -> Result<Json<VaultItemResponse>, NetworkResponse> {
+    let _key = key?;
     let db = db as &DatabaseConnection;
     let id = Uuid::new_v4();
 
@@ -77,7 +79,7 @@ pub async fn create_vault_item(db: &State<DatabaseConnection>, request: Json<Cre
 
     VaultItem::insert(new_vault_item)
         .exec(db)
-        .await?;
+        .await.unwrap();
 
     Ok(Json(VaultItemResponse { id, name: request.name.to_owned(), vault_id: request.vault_id, ciphertext: "".to_owned(), nonce: "".to_owned() }))
 }

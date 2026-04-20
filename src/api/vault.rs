@@ -4,7 +4,7 @@ use sea_orm::{DatabaseConnection, EntityTrait, prelude::Uuid};
 use ::serde::{Serialize, Deserialize};
 use rocket::{serde::json::Json, *};
 
-use crate::api::ErrorResponder;
+use crate::api::{JWT, NetworkResponse};
 use crate::entities::prelude::VaultKey;
 use crate::entities::{self, user};
 use crate::Vault;
@@ -39,7 +39,8 @@ pub struct CreateVaultRequest<'r> {
 }
 
 #[get("/vaults/<user_id>")]
-pub async fn get_all_vaults(db: &State<DatabaseConnection>, user_id: Uuid) -> Json<Vec<VaultResponse>> {
+pub async fn get_all_vaults(db: &State<DatabaseConnection>, user_id: Uuid, key: Result<JWT, NetworkResponse>) -> Result<Json<Vec<VaultResponse>>, NetworkResponse> {
+    let _key = key?;
     let db = db as &DatabaseConnection;
 
     let user: Option<user::Model> = User::find_by_id(user_id).one(db).await.unwrap();
@@ -53,11 +54,12 @@ pub async fn get_all_vaults(db: &State<DatabaseConnection>, user_id: Uuid) -> Js
         .map(Into::into)
         .collect();
 
-    Json(vaults)
+    Ok(Json(vaults))
 }
 
 #[post("/vaults", data = "<request>")]
-pub async fn create_vault(db: &State<DatabaseConnection>, request: Json<CreateVaultRequest<'_>>) -> Result<Json<VaultResponse>, ErrorResponder> {
+pub async fn create_vault(db: &State<DatabaseConnection>, request: Json<CreateVaultRequest<'_>>, key: Result<JWT, NetworkResponse>) -> Result<Json<VaultResponse>, NetworkResponse> {
+    let _key = key?;
     let db = db as &DatabaseConnection;
     let id = Uuid::new_v4();
 
@@ -69,10 +71,7 @@ pub async fn create_vault(db: &State<DatabaseConnection>, request: Json<CreateVa
         created_at: sea_orm::ActiveValue::Set(Utc::now().naive_utc()),
     };
 
-    Vault::insert(new_vault)
-        .exec(db)
-        .await?;
-
+    Vault::insert(new_vault).exec(db).await.unwrap();
     
     let key_id = Uuid::new_v4();
     let new_vault_key = entities::vault_key::ActiveModel {
@@ -84,9 +83,7 @@ pub async fn create_vault(db: &State<DatabaseConnection>, request: Json<CreateVa
         created_at: sea_orm::ActiveValue::Set(Utc::now().naive_utc()),
     };
 
-    VaultKey::insert(new_vault_key)
-        .exec(db)
-        .await?;
+    VaultKey::insert(new_vault_key).exec(db).await.unwrap();
 
     Ok(Json(VaultResponse { id, name: request.name.to_string(), created_by_device_id: request.device_id }))
 }

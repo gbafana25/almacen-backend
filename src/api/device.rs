@@ -2,7 +2,7 @@ use chrono::Utc;
 use sea_orm::{DatabaseConnection, EntityTrait, ModelTrait, prelude::Uuid};
 use ::serde::{Deserialize, Serialize};
 use rocket::{serde::json::Json, *};
-use crate::api::ErrorResponder;
+use crate::api::{JWT, NetworkResponse};
 use crate::entities::{self, device};
 use crate::entities::user::{self};
 use crate::User;
@@ -37,7 +37,8 @@ impl From<entities::device::Model> for DeviceResponse {
 }
 
 #[get("/devices/<user_id>")]
-pub async fn get_devices(db: &State<DatabaseConnection>, user_id: Uuid) -> Json<Vec<DeviceResponse>> {
+pub async fn get_devices(db: &State<DatabaseConnection>, user_id: Uuid, key: Result<JWT, NetworkResponse>) -> Result<Json<Vec<DeviceResponse>>, NetworkResponse> {
+    let _key = key?;
     let db = db as &DatabaseConnection;
 
     let user: Option<user::Model> = User::find_by_id(user_id).one(db).await.unwrap();
@@ -51,11 +52,12 @@ pub async fn get_devices(db: &State<DatabaseConnection>, user_id: Uuid) -> Json<
     .map(Into::into)
     .collect();
 
-    Json(devices)
+    Ok(Json(devices))
 }
 
 #[post("/create-device", data = "<request>")]
-pub async fn create_device(db: &State<DatabaseConnection>, request: Json<CreateDeviceRequest<'_>>) -> Result<Json<DeviceResponse>, ErrorResponder> {
+pub async fn create_device(db: &State<DatabaseConnection>, request: Json<CreateDeviceRequest<'_>>, key: Result<JWT, NetworkResponse>) -> Result<Json<DeviceResponse>, NetworkResponse> {
+    let _key = key?;
     let db = db as &DatabaseConnection;
     let id = Uuid::new_v4();
     
@@ -69,8 +71,9 @@ pub async fn create_device(db: &State<DatabaseConnection>, request: Json<CreateD
         ..Default::default()
     };
 
-    Device::insert(updated_device)
-        .exec(db)
-        .await?;
-    Ok(Json(DeviceResponse { id, user_id: request.user_id, name: request.name.to_string(), identity_public_key: request.identity_public_key.to_string() }))
+    match Device::insert(updated_device).exec(db).await {
+        Ok(_) => Ok(Json(DeviceResponse { id, user_id: request.user_id, name: request.name.to_string(), identity_public_key: request.identity_public_key.to_string() })),
+        Err(err) => return Err(NetworkResponse::BadRequest(err.to_string())),
+    }
+    
 }

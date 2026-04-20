@@ -1,4 +1,4 @@
-use crate::entities::{self, prelude::VaultKey, vault};
+use crate::{api::{JWT, NetworkResponse}, entities::{self, prelude::VaultKey, vault}};
 use sea_orm::{DatabaseConnection, EntityTrait, ModelTrait, prelude::Uuid};
 use ::serde::{Serialize};
 use rocket::{serde::json::Json, *};
@@ -25,7 +25,8 @@ impl From<entities::vault_key::Model>for VaultKeyResponse {
 }
 
 #[get("/vault-key/<vault_id>")]
-pub async fn get_vault_key(db: &State<DatabaseConnection>, vault_id: Uuid) -> Option<Json<VaultKeyResponse>> {
+pub async fn get_vault_key(db: &State<DatabaseConnection>, vault_id: Uuid, key: Result<JWT, NetworkResponse>) -> Result<Json<VaultKeyResponse>, NetworkResponse> {
+    let _key = key?;
     let db = db as &DatabaseConnection;
 
     let vault: Option<vault::Model> = Vault::find_by_id(vault_id).one(db).await.unwrap();
@@ -34,7 +35,9 @@ pub async fn get_vault_key(db: &State<DatabaseConnection>, vault_id: Uuid) -> Op
     let vault_key = vault.find_related(VaultKey)
         .one(db)
         .await
-        .unwrap()?;
+        .unwrap();
 
-    Some(Json(vault_key.into()))
+    let vault_key = vault_key.unwrap();
+
+    Ok(Json(vault_key.into()))
 }

@@ -12,9 +12,6 @@
 
 ## TODO
 - endpoint to add another key to vault (new device enrollment)
-- jwt token generated on login
-    - storage
-    - create guard for api requests
 - for device keys, should research more into key exchange
     - should there be server public key sent on succesful login?
 - figure out more automated way of updating migrations in docker compose

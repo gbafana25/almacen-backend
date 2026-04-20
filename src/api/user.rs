@@ -1,4 +1,5 @@
-use crate::{api::ErrorResponder, entities::user};
+use crate::{api::{ErrorResponder, NetworkResponse, create_jwt}, entities::user};
+use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier, password_hash::{SaltString, rand_core::OsRng}};
 use chrono::Utc;
 use ::serde::{Deserialize, Serialize};
 use entities::{prelude::*};
@@ -11,14 +12,14 @@ use crate::entities;
 #[serde(crate = "rocket::serde")]
 pub struct SignupRequest<'r> {
     email: &'r str,
-    password_hash: &'r str,
+    password: &'r str,
 }
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
 pub struct LoginRequest<'r> {
     id: Uuid,
-    password_hash: &'r str,
+    password: &'r str,
 }
 
 #[derive(Serialize)]
@@ -26,6 +27,14 @@ pub struct LoginRequest<'r> {
 pub struct UserResponse {
     id: Uuid,
     email: String,
+}
+
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct LoginResponse {
+    id: Uuid,
+    email: String,
+    jwt: String,
 }
 
 impl From<entities::user::Model> for UserResponse {
@@ -37,10 +46,15 @@ impl From<entities::user::Model> for UserResponse {
     }
 }
 
+fn hash_password(key: &String, salt: &SaltString) -> String {
+    Argon2::default().hash_password(key.as_bytes(), salt).unwrap().to_string()
+}
+
 // in the future will generate and store JWT token
 #[post("/login", data = "<request>")]
-pub async fn login(db: &State<DatabaseConnection>, request: Json<LoginRequest<'_>>) -> Result<Json<UserResponse>, ErrorResponder> {
+pub async fn login(db: &State<DatabaseConnection>, request: Json<LoginRequest<'_>>) -> Result<Json<LoginResponse>, NetworkResponse> {
     let db = db as &DatabaseConnection;
+    let password_hasher = Argon2::default();
 
     let user: Option<user::Model> = User::find_by_id(request.id)
         .one(db)
@@ -49,10 +63,18 @@ pub async fn login(db: &State<DatabaseConnection>, request: Json<LoginRequest<'_
 
     let user = user.unwrap();
 
-    if user.hashed_password == request.password_hash {
-        Ok(Json(user.into()))
-    } else {
-        return Err(ErrorResponder { message: "invalid login info".to_string() });
+    let saved_salt: PasswordHash = user.hashed_password.as_str().try_into().unwrap();
+    match password_hasher.verify_password(request.password.to_owned().as_bytes(), &saved_salt) {
+        Ok(_) => {
+            //return Ok(Json(user.into()));
+            match create_jwt(user.id) {
+                Ok(token) => Ok(Json(LoginResponse { id: user.id, email: user.email, jwt: token })),
+                Err(err) => Err(NetworkResponse::BadRequest(err.to_string()))
+            }
+        },
+        Err(err) => {
+            return Err(NetworkResponse::BadRequest(err.to_string()));
+        }
     }
 
 }
@@ -74,6 +96,8 @@ pub async fn users(db: &State<DatabaseConnection>) -> Json<Vec<UserResponse>> {
 #[post("/signup", data = "<request>")]
 pub async fn signup(db: &State<DatabaseConnection>, request: Json<SignupRequest<'_>>) -> Result<Json<UserResponse>, ErrorResponder> {
     let db = db as &DatabaseConnection;
+    let salt = SaltString::generate(&mut OsRng);
+    let hashed_password = hash_password(&request.password.to_string(), &salt);
     let id = Uuid::new_v4();
 
     let new_user = entities::user::ActiveModel {
@@ -81,7 +105,7 @@ pub async fn signup(db: &State<DatabaseConnection>, request: Json<SignupRequest<
         email: sea_orm::ActiveValue::Set(request.email.to_owned()),
         created_at: sea_orm::ActiveValue::Set(Utc::now().naive_utc()),
         updated_at: sea_orm::ActiveValue::Set(Utc::now().naive_utc()),
-        hashed_password: sea_orm::ActiveValue::Set(request.password_hash.to_owned()),
+        hashed_password: sea_orm::ActiveValue::Set(hashed_password),
         ..Default::default()
     };
 
