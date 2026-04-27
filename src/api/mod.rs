@@ -85,7 +85,7 @@ impl<'r> FromRequest<'r> for JWT {
                         Outcome::Error((Status::Unauthorized, NetworkResponse::Unauthorized(serde_json::to_string(&response).unwrap())))
                     },
                     _ => {
-                        let response = Response { body: ResponseBody::Message(format!("Error validatin JWT token - {}", err))};
+                        let response = Response { body: ResponseBody::Message(format!("Error validating JWT token - {}", err))};
                         Outcome::Error((Status::Unauthorized, NetworkResponse::Unauthorized(serde_json::to_string(&response).unwrap())))
                     }
                 }

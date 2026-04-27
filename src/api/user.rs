@@ -1,4 +1,4 @@
-use crate::{api::{ErrorResponder, NetworkResponse, create_jwt}, entities::user};
+use crate::{api::{ErrorResponder, JWT, NetworkResponse, create_jwt}, entities::user};
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier, password_hash::{SaltString, rand_core::OsRng}};
 use chrono::Utc;
 use ::serde::{Deserialize, Serialize};
@@ -91,6 +91,16 @@ pub async fn users(db: &State<DatabaseConnection>) -> Json<Vec<UserResponse>> {
         .map(Into::into)
         .collect();
     Json(user_objs)
+}
+
+#[get("/validate")]
+pub async fn validate(key: Result<JWT, NetworkResponse>) -> Result<Json<String>, NetworkResponse> {
+    match key {
+        Ok(_) => Ok(Json(String::from("ok"))),
+        Err(e) => {
+            Err(e)
+        },
+    }
 }
 
 #[post("/signup", data = "<request>")]
