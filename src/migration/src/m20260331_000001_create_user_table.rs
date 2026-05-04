@@ -19,6 +19,9 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(User::Id).uuid().not_null().primary_key())
                     .col(ColumnDef::new(User::Email).string().not_null())
                     .col(ColumnDef::new(User::HashedPassword).string().not_null())
+                    .col(ColumnDef::new(User::AccountKey).string().not_null())
+                    .col(ColumnDef::new(User::AccountKeyNonce).string().not_null())
+                    .col(ColumnDef::new(User::Salt).string().not_null())
                     .col(ColumnDef::new(User::CreatedAt).timestamp().not_null())
                     .col(ColumnDef::new(User::UpdatedAt).timestamp().not_null())
                     .to_owned(),
@@ -40,6 +43,9 @@ pub enum User {
     Id,
     Email,
     HashedPassword,
+    AccountKey,
+    AccountKeyNonce,
+    Salt,
     CreatedAt,
     UpdatedAt,
 }

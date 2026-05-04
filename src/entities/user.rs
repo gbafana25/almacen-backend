@@ -9,6 +9,9 @@ pub struct Model {
     pub id: Uuid,
     pub email: String,
     pub hashed_password: String,
+    pub account_key: String,
+    pub account_key_nonce: String,
+    pub salt: String,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }

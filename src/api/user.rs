@@ -13,6 +13,9 @@ use crate::entities;
 pub struct SignupRequest<'r> {
     email: &'r str,
     password: &'r str,
+    account_key: &'r str,
+    acct_key_nonce: &'r str,
+    salt: &'r str,
 }
 
 #[derive(Deserialize)]
@@ -27,6 +30,9 @@ pub struct LoginRequest<'r> {
 pub struct UserResponse {
     id: Uuid,
     email: String,
+    account_key: String,
+    acct_key_nonce: String,
+    salt: String,
 }
 
 #[derive(Serialize)]
@@ -35,6 +41,9 @@ pub struct LoginResponse {
     id: Uuid,
     email: String,
     jwt: String,
+    account_key: String,
+    acct_key_nonce: String,
+    salt: String,
 }
 
 impl From<entities::user::Model> for UserResponse {
@@ -42,6 +51,9 @@ impl From<entities::user::Model> for UserResponse {
         Self {
             id: model.id,
             email: model.email,
+            account_key: model.account_key,
+            acct_key_nonce: model.account_key_nonce,
+            salt: model.salt,
         }
     }
 }
@@ -68,7 +80,7 @@ pub async fn login(db: &State<DatabaseConnection>, request: Json<LoginRequest<'_
         Ok(_) => {
             //return Ok(Json(user.into()));
             match create_jwt(user.id) {
-                Ok(token) => Ok(Json(LoginResponse { id: user.id, email: user.email, jwt: token })),
+                Ok(token) => Ok(Json(LoginResponse { id: user.id, email: user.email, jwt: token, account_key: user.account_key, acct_key_nonce: user.account_key_nonce, salt: user.salt })),
                 Err(err) => Err(NetworkResponse::BadRequest(err.to_string()))
             }
         },
@@ -116,11 +128,14 @@ pub async fn signup(db: &State<DatabaseConnection>, request: Json<SignupRequest<
         created_at: sea_orm::ActiveValue::Set(Utc::now().naive_utc()),
         updated_at: sea_orm::ActiveValue::Set(Utc::now().naive_utc()),
         hashed_password: sea_orm::ActiveValue::Set(hashed_password),
+        account_key: sea_orm::ActiveValue::Set(request.account_key.to_owned()),
+        account_key_nonce: sea_orm::ActiveValue::Set(request.acct_key_nonce.to_owned()),
+        salt: sea_orm::ActiveValue::Set(request.salt.to_owned()),
         ..Default::default()
     };
 
     User::insert(new_user)
         .exec(db)
         .await?;
-    Ok(Json(UserResponse { id: id, email: request.email.to_string() }))
+    Ok(Json(UserResponse { id: id, email: request.email.to_string(), account_key: request.account_key.to_string(), acct_key_nonce: request.acct_key_nonce.to_string(), salt: request.salt.to_string() }))
 }
