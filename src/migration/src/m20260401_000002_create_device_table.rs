@@ -26,7 +26,6 @@ impl MigrationTrait for Migration {
                             .to(User::Table, User::Id)
                     )
                     .col(ColumnDef::new(Device::Name).string().not_null())
-                    .col(ColumnDef::new(Device::IdentityPublicKey).binary().not_null())
                     .col(ColumnDef::new(Device::LastSeen).timestamp().not_null())
                     .col(ColumnDef::new(Device::CreatedAt).timestamp().not_null())
                     .to_owned()
@@ -49,7 +48,6 @@ pub enum Device {
     Id,
     UserId,
     Name,
-    IdentityPublicKey,
     LastSeen,
     CreatedAt,
 }

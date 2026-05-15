@@ -14,14 +14,12 @@ pub struct DeviceResponse {
     id: Uuid,
     user_id: Uuid,
     name: String,
-    identity_public_key: String,
 }
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
 pub struct CreateDeviceRequest<'r> {
    name: &'r str,
-   identity_public_key: &'r str,
    user_id: Uuid,
 }
 
@@ -31,7 +29,6 @@ impl From<entities::device::Model> for DeviceResponse {
             id: model.id,
             name: model.name,
             user_id: model.user_id,
-            identity_public_key: String::from_utf8(model.identity_public_key).unwrap()
         }
     }
 }
@@ -65,14 +62,13 @@ pub async fn create_device(db: &State<DatabaseConnection>, request: Json<CreateD
         id: sea_orm::ActiveValue::Set(id.to_owned()),
         user_id: sea_orm::ActiveValue::Set(request.user_id),
         name: sea_orm::ActiveValue::Set(request.name.to_owned()),
-        identity_public_key: sea_orm::ActiveValue::Set(request.identity_public_key.as_bytes().to_vec()),
         last_seen: sea_orm::ActiveValue::Set(Utc::now().naive_utc()),
         created_at: sea_orm::ActiveValue::Set(Utc::now().naive_utc()),
         ..Default::default()
     };
 
     match Device::insert(updated_device).exec(db).await {
-        Ok(_) => Ok(Json(DeviceResponse { id, user_id: request.user_id, name: request.name.to_string(), identity_public_key: request.identity_public_key.to_string() })),
+        Ok(_) => Ok(Json(DeviceResponse { id, user_id: request.user_id, name: request.name.to_string() })),
         Err(err) => return Err(NetworkResponse::BadRequest(err.to_string())),
     }
     

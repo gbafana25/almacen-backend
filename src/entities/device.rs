@@ -9,8 +9,6 @@ pub struct Model {
     pub id: Uuid,
     pub user_id: Uuid,
     pub name: String,
-    #[sea_orm(column_type = "VarBinary(StringLen::None)")]
-    pub identity_public_key: Vec<u8>,
     pub last_seen: DateTime,
     pub created_at: DateTime,
 }
