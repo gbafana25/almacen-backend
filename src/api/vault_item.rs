@@ -1,12 +1,13 @@
 use chrono::Utc;
-use rocket::post;
+use rocket::{post, put};
 use rocket::{State, get, serde::json::Json};
+use sea_orm::{ActiveModelTrait, Set};
 use sea_orm::{DatabaseConnection, ModelTrait, EntityTrait};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::api::{JWT, NetworkResponse};
-use crate::entities::{self, vault};
+use crate::entities::{self, vault, vault_item};
 use crate::Vault;
 use crate::VaultItem;
 
@@ -39,6 +40,31 @@ pub struct CreateVaultItemRequest<'r> {
     vault_id: Uuid,
     encrypted_item: &'r str,
     nonce: &'r str,
+}
+
+#[derive(Deserialize)]
+#[serde(crate = "rocket::serde")]
+pub struct EditVaultItemRequest<'r> {
+    name: &'r str,
+    encrypted_item: &'r str,
+    nonce: &'r str,
+}
+
+#[put("/vault-items/<vault_item_id>", data = "<request>")]
+pub async fn update_vault_item(db: &State<DatabaseConnection>, vault_item_id: Uuid, request: Json<EditVaultItemRequest<'_>>, key: Result<JWT, NetworkResponse>) -> Result<Json<VaultItemResponse>, NetworkResponse> {
+    let _key = key?;
+    let db = db as &DatabaseConnection;
+
+    let vault_item: Option<vault_item::Model> = VaultItem::find_by_id(vault_item_id).one(db).await?;
+    let mut vault_item: vault_item::ActiveModel = vault_item.unwrap().into();
+
+    vault_item.name = Set(request.name.to_owned());
+    vault_item.ciphertext = Set(request.encrypted_item.to_owned());
+    vault_item.nonce = Set(request.nonce.to_owned());
+
+    let vault_item: vault_item::Model = vault_item.update(db).await?;
+    Ok(Json(vault_item.into()))
+
 }
 
 #[get("/vault-items/<vault_id>")]
