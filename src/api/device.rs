@@ -20,7 +20,6 @@ pub struct DeviceResponse {
 #[serde(crate = "rocket::serde")]
 pub struct CreateDeviceRequest<'r> {
    name: &'r str,
-   user_id: Uuid,
 }
 
 impl From<entities::device::Model> for DeviceResponse {
@@ -33,12 +32,12 @@ impl From<entities::device::Model> for DeviceResponse {
     }
 }
 
-#[get("/devices/<user_id>")]
-pub async fn get_devices(db: &State<DatabaseConnection>, user_id: Uuid, key: Result<JWT, NetworkResponse>) -> Result<Json<Vec<DeviceResponse>>, NetworkResponse> {
+#[get("/devices")]
+pub async fn get_devices(db: &State<DatabaseConnection>, key: Result<JWT, NetworkResponse>) -> Result<Json<Vec<DeviceResponse>>, NetworkResponse> {
     let _key = key?;
     let db = db as &DatabaseConnection;
 
-    let user: Option<user::Model> = User::find_by_id(user_id).one(db).await.unwrap();
+    let user: Option<user::Model> = User::find_by_id(_key.claims.user_id).one(db).await.unwrap();
     let user: user::Model = user.unwrap();
 
     let devices = user.find_related(Device)
@@ -60,7 +59,7 @@ pub async fn create_device(db: &State<DatabaseConnection>, request: Json<CreateD
     
     let updated_device = device::ActiveModel {
         id: sea_orm::ActiveValue::Set(id.to_owned()),
-        user_id: sea_orm::ActiveValue::Set(request.user_id),
+        user_id: sea_orm::ActiveValue::Set(_key.claims.user_id),
         name: sea_orm::ActiveValue::Set(request.name.to_owned()),
         last_seen: sea_orm::ActiveValue::Set(Utc::now().naive_utc()),
         created_at: sea_orm::ActiveValue::Set(Utc::now().naive_utc()),
@@ -68,7 +67,7 @@ pub async fn create_device(db: &State<DatabaseConnection>, request: Json<CreateD
     };
 
     match Device::insert(updated_device).exec(db).await {
-        Ok(_) => Ok(Json(DeviceResponse { id, user_id: request.user_id, name: request.name.to_string() })),
+        Ok(_) => Ok(Json(DeviceResponse { id, user_id: _key.claims.user_id, name: request.name.to_string() })),
         Err(err) => return Err(NetworkResponse::BadRequest(err.to_string())),
     }
     

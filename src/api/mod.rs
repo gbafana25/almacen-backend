@@ -37,6 +37,12 @@ pub enum NetworkResponse {
     NotFound(String),
 }
 
+impl From<sea_orm::DbErr> for NetworkResponse {
+    fn from(value: sea_orm::DbErr) -> Self {
+        Self::BadRequest(format!("Database error: {}", value))
+    }
+}
+
 #[derive(Serialize)]
 pub enum ResponseBody {
     Message(String),
@@ -78,7 +84,7 @@ impl<'r> FromRequest<'r> for JWT {
                 Err(err) => match &err.kind() {
                     jsonwebtoken::errors::ErrorKind::ExpiredSignature => {
                         let response = Response { body: ResponseBody::Message(format!("Error: Expired token"))};
-                        Outcome::Error((Status::Unauthorized, NetworkResponse::Unauthorized(serde_json::to_string(&response).unwrap())))
+                        Outcome::Error((Status::NotFound, NetworkResponse::NotFound(serde_json::to_string(&response).unwrap())))
                     },
                     jsonwebtoken::errors::ErrorKind::InvalidToken => {
                         let response = Response { body: ResponseBody::Message(format!("Error: invalid token"))};
