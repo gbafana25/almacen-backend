@@ -11,6 +11,5 @@
 - run `sea-orm-cli generate entity -u postgres://postgres:postgres@localhost:5432/app_db -o src/entities/` to generate entities
 
 ## TODO
-- finish account key implementation
-    - secret should be shared manually (text/qr code) when setting up new device
+- secret should be shared manually (text/qr code) when setting up new device
 - figure out more automated way of updating migrations in docker compose
