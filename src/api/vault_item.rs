@@ -50,7 +50,7 @@ pub struct EditVaultItemRequest<'r> {
     nonce: &'r str,
 }
 
-#[get("/vault-items/<vault_item_id>")]
+#[get("/vault-items/item/<vault_item_id>")]
 pub async fn get_vault_item(db: &State<DatabaseConnection>, vault_item_id: Uuid, key: Result<JWT, NetworkResponse>) -> Result<Json<VaultItemResponse>, NetworkResponse> {
     let _key = key?;
     let db = db as &DatabaseConnection;
@@ -78,7 +78,7 @@ pub async fn update_vault_item(db: &State<DatabaseConnection>, vault_item_id: Uu
 
 }
 
-#[get("/vault-items/<vault_id>")]
+#[get("/vault-items/vault/<vault_id>")]
 pub async fn get_vault_items_by_vault(db: &State<DatabaseConnection>, vault_id: Uuid, key: Result<JWT, NetworkResponse>) -> Result<Json<Vec<VaultItemResponse>>, NetworkResponse> {
     let _key = key?;
     let db = db as &DatabaseConnection;
