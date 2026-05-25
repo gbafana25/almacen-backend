@@ -50,6 +50,17 @@ pub struct EditVaultItemRequest<'r> {
     nonce: &'r str,
 }
 
+#[get("/vault-items/<vault_item_id>")]
+pub async fn get_vault_item(db: &State<DatabaseConnection>, vault_item_id: Uuid, key: Result<JWT, NetworkResponse>) -> Result<Json<VaultItemResponse>, NetworkResponse> {
+    let _key = key?;
+    let db = db as &DatabaseConnection;
+
+    let vault_item: Option<vault_item::Model> = VaultItem::find_by_id(vault_item_id).one(db).await?;
+    let vault_item = vault_item.unwrap();
+
+    Ok(Json(vault_item.into()))
+}
+
 #[put("/vault-items/<vault_item_id>", data = "<request>")]
 pub async fn update_vault_item(db: &State<DatabaseConnection>, vault_item_id: Uuid, request: Json<EditVaultItemRequest<'_>>, key: Result<JWT, NetworkResponse>) -> Result<Json<VaultItemResponse>, NetworkResponse> {
     let _key = key?;

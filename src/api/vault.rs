@@ -35,6 +35,17 @@ pub struct EditVaultRequest<'r> {
     device_id: Uuid,
 }
 
+#[get("/vaults/<vault_id>")]
+pub async fn get_vault(db: &State<DatabaseConnection>, vault_id: Uuid, key: Result<JWT, NetworkResponse>) -> Result<Json<VaultResponse>, NetworkResponse> {
+    let _key = key?;
+    let db = db as &DatabaseConnection;
+
+    let vault: Option<vault::Model> = Vault::find_by_id(vault_id).one(db).await.unwrap();
+    let vault = vault.unwrap();
+
+    Ok(Json(vault.into()))
+}
+
 #[put("/vaults/<vault_id>", data = "<request>")]
 pub async fn update_vault(db: &State<DatabaseConnection>, vault_id: Uuid, request: Json<EditVaultRequest<'_>>, key: Result<JWT, NetworkResponse>) -> Result<Json<VaultResponse>, NetworkResponse> {
     let _key = key?;
