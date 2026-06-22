@@ -102,7 +102,7 @@ impl<'r> FromRequest<'r> for JWT {
 
 pub fn create_jwt(user_id: Uuid) -> Result<String, Error> {
     let secret = "Temporary secret";
-    let exp = Utc::now().checked_add_signed(chrono::Duration::seconds(60)).unwrap().timestamp();
+    let exp = Utc::now().checked_add_signed(chrono::Duration::seconds(3600)).unwrap().timestamp();
 
     let claims = Claims {
         user_id: user_id,
