@@ -3,7 +3,7 @@ use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier, password_ha
 use chrono::Utc;
 use ::serde::{Deserialize, Serialize};
 use entities::{prelude::*};
-use sea_orm::{DatabaseConnection, prelude::Uuid, EntityTrait};
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, prelude::Uuid};
 use rocket::{serde::json::Json, *};
 
 use crate::entities;
@@ -21,7 +21,7 @@ pub struct SignupRequest<'r> {
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
 pub struct LoginRequest<'r> {
-    id: Uuid,
+    email: &'r str,
     password: &'r str,
 }
 
@@ -68,10 +68,10 @@ pub async fn login(db: &State<DatabaseConnection>, request: Json<LoginRequest<'_
     let db = db as &DatabaseConnection;
     let password_hasher = Argon2::default();
 
-    let user: Option<user::Model> = User::find_by_id(request.id)
+    let user: Option<user::Model> = User::find()
+        .filter(user::Column::Email.eq(request.email))
         .one(db)
-        .await
-        .unwrap();
+        .await?;
 
     let user = user.unwrap();
 
