@@ -118,6 +118,16 @@ pub async fn validate(key: Result<JWT, NetworkResponse>) -> Result<Json<String>,
 #[post("/signup", data = "<request>")]
 pub async fn signup(db: &State<DatabaseConnection>, request: Json<SignupRequest<'_>>) -> Result<Json<UserResponse>, ErrorResponder> {
     let db = db as &DatabaseConnection;
+
+    match User::find().filter(user::Column::Email.eq(request.email)).one(db).await? {
+        Some(_) => {
+            return Err(ErrorResponder { message: "user already exists".to_string() })
+        },
+        None => {
+            
+        }
+    }
+
     let salt = SaltString::generate(&mut OsRng);
     let hashed_password = hash_password(&request.password.to_string(), &salt);
     let id = Uuid::new_v4();
