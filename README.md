@@ -11,5 +11,7 @@
 - run `sea-orm-cli generate entity -u postgres://postgres:postgres@localhost:5432/app_db -o src/entities/` to generate entities
 
 ## TODO
-- secret should be shared manually (text/qr code) when setting up new device
+- setup cors
+    - https://docs.rs/rocket_cors/latest/rocket_cors/
+    - https://github.com/steadylearner/code/blob/master/post/Rust/How%20to%20use%20CORS%20with%20Rust%20Rocket.md
 - figure out more automated way of updating migrations in docker compose
