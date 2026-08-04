@@ -34,12 +34,7 @@ async fn rocket() -> _ {
 }
 
 fn cors_setup() -> Cors {
-    let allowed_origins = AllowedOrigins::some_exact(&[
-        "http://localhost:7000",
-        "http://127.0.0.1:7000",
-        "http://localhost:8081",
-        "http://127.0.0.1:8081",
-    ]);
+    let allowed_origins = AllowedOrigins::All;
 
     CorsOptions {
         allowed_origins,
