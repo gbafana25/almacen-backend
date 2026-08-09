@@ -118,5 +118,5 @@ pub async fn create_vault_item(db: &State<DatabaseConnection>, request: Json<Cre
         .exec(db)
         .await.unwrap();
 
-    Ok(Json(VaultItemResponse { id, name: request.name.to_owned(), vault_id: request.vault_id, ciphertext: "".to_owned(), nonce: "".to_owned() }))
+    Ok(Json(VaultItemResponse { id, name: request.name.to_owned(), vault_id: request.vault_id, ciphertext: request.encrypted_item.to_owned(), nonce: request.nonce.to_owned() }))
 }
