@@ -38,7 +38,7 @@ fn cors_setup() -> Cors {
 
     CorsOptions {
         allowed_origins,
-        allowed_methods: vec![Method::Get, Method::Post].into_iter().map(From::from).collect(),
+        allowed_methods: vec![Method::Get, Method::Post, Method::Put].into_iter().map(From::from).collect(),
         allowed_headers: AllowedHeaders::All,
         allow_credentials: true,
         ..Default::default()
