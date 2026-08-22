@@ -4,6 +4,8 @@ pub mod vault;
 pub mod vault_item;
 pub mod vault_key;
 
+use std::env;
+
 use chrono::Utc;
 use rocket::{Responder, http::Status, request::{FromRequest, Outcome, Request}};
 use sea_orm::DbErr;
@@ -101,7 +103,7 @@ impl<'r> FromRequest<'r> for JWT {
 }
 
 pub fn create_jwt(user_id: Uuid) -> Result<String, Error> {
-    let secret = "Temporary secret";
+    let secret = env::var("JWT_SECRET").unwrap();
     let exp = Utc::now().checked_add_signed(chrono::Duration::seconds(3600)).unwrap().timestamp();
 
     let claims = Claims {
@@ -117,7 +119,7 @@ pub fn create_jwt(user_id: Uuid) -> Result<String, Error> {
 
 pub fn decode_jwt(token: String) -> Result<Claims, ErrorKind> {
     let token = token.trim_start_matches("Bearer").trim();
-    let secret = "Temporary secret";
+    let secret = env::var("JWT_SECRET").unwrap();
 
     match decode::<Claims>(
         &token,
