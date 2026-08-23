@@ -17,7 +17,7 @@ async fn rocket() -> _ {
     dotenv().ok();
 
     let config = Config {
-        port: env::var("APP_PORT").unwrap_or(String::from("8000")).parse().unwrap_or(8000),
+        port: env::var("PORT").unwrap_or(String::from("8080")).parse().unwrap_or(8000),
         address: Ipv4Addr::from_str(&env::var("APP_ADDR").unwrap_or("0.0.0.0".to_string())).unwrap_or(Ipv4Addr::new(0, 0, 0, 0).into()).into(),
         ..Default::default()
     };
